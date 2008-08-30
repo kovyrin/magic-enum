@@ -123,6 +123,14 @@ module MagicEnum
           end
         end
       end
+      
+      # Create named scopes for each enum value
+      if opts[:named_scopes]
+        const_get(enum).keys.each do |key|
+          named_scope key, :conditions => ["#{name} = ?", const_get(enum)[key]]
+        end
+      end
+      
     end
   end
 end
