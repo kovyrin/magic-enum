@@ -113,7 +113,11 @@ module MagicEnum
   
       define_method "#{name}=" do |value|
         raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and self.class.const_get(enum)[value].nil?
-        self[name] = self.class.const_get(enum)[value] || opts[:default]
+        if value.is_a?(Integer)
+          self[name] = value
+        else
+          self[name] = self.class.const_get(enum)[value] || opts[:default]
+        end
       end
       
       if opts[:simple_accessors]
