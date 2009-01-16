@@ -42,6 +42,12 @@ context 'Model with magic enum' do
     @model.status.should == :unknown
   end
   
+  specify 'should store enum value when getting a string instead of a symbol' do
+    @model.status = 'draft'
+    @model[:status].should == 1
+    @model.status.should == :draft
+  end
+
   specify 'should not define simple accessors by default' do
     @model.methods.should_not include('unknown?')
     @model.methods.should_not include('draft?')
