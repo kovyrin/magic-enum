@@ -92,6 +92,8 @@ context 'Model with magic enum and default value specified' do
   end
 
   specify 'should use default value when invalid value received' do
+    @model.status = nil
+    @model.status.should == :published
     @model.status = :invalid
     @model.status.should == :published
     @model[:status].should == 2
