@@ -80,7 +80,11 @@ module MagicEnum
     #   end
     #   
     def define_enum(name, opts = {})
-      default_opts = { :raise_on_invalid => false, :simple_accessors => false }
+      default_opts = {  :raise_on_invalid => false, 
+                        :simple_accessors => false, 
+                        :named_scopes => false,
+                        :scope_extensions => false
+                        }
       opts = default_opts.merge(opts)
       name = name.to_sym
 
