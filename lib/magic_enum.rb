@@ -80,7 +80,11 @@ module MagicEnum
     #   end
     #   
     def define_enum(name, opts = {})
-      default_opts = { :raise_on_invalid => false, :simple_accessors => false }
+      default_opts = {  :raise_on_invalid => false, 
+                        :simple_accessors => false, 
+                        :named_scopes => false,
+                        :scope_extensions => false
+                        }
       opts = default_opts.merge(opts)
       name = name.to_sym
 
@@ -114,7 +118,11 @@ module MagicEnum
       define_method "#{name}=" do |value|
         value = value.to_sym if value.is_a?(String)
         raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and self.class.const_get(enum)[value].nil?
-        self[name] = self.class.const_get(enum)[value] || opts[:default]
+        if value.is_a?(Integer)
+          self[name] = value
+        else
+          self[name] = self.class.const_get(enum)[value] || opts[:default]
+        end
       end
       
       if opts[:simple_accessors]
@@ -124,6 +132,23 @@ module MagicEnum
           end
         end
       end
+      
+      # Create named scopes for each enum value
+      if opts[:named_scopes]
+        const_get(enum).keys.each do |key|
+          named_scope key.to_s.pluralize.to_sym, :conditions => ["#{name} = ?", const_get(enum)[key]] do
+            opts[:scope_extensions].each do |ext_name, ext_block|
+              define_method ext_name, ext_block            
+            end if opts[:scope_extensions] and opts[:scope_extensions].is_a?(Hash)
+          end
+        end
+        named_scope "of_#{name}".to_sym, lambda { |t| { :conditions => ["#{name} = ?", const_get(enum)[t]] } } do
+          opts[:scope_extensions].each do |ext_name, ext_block|
+            define_method ext_name, ext_block            
+          end if opts[:scope_extensions] and opts[:scope_extensions].is_a?(Hash)
+        end
+      end
+      
     end
   end
 end
