@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'active_record'
+
 require File.dirname(__FILE__) + '/../init'
 
 module MagicEnumHelper
@@ -17,14 +18,14 @@ module MagicEnumHelper
   end
 end
 
-context 'Model with magic enum' do
+describe 'Model with magic enum' do
   include MagicEnumHelper
 
   class TestModel1 < MagicEnumHelper::TestModelBase
     define_enum :status
   end
 
-  setup do
+  before do
     @model = TestModel1.new
   end
 
@@ -92,14 +93,14 @@ context 'Model with magic enum' do
 
 end
 
-context 'Model with magic enum and default value specified' do
+describe 'Model with magic enum and default value specified' do
   include MagicEnumHelper
 
   class TestModel2 < MagicEnumHelper::TestModelBase
     define_enum :status, :default => 2
   end
 
-  setup do
+  before do
     @model = TestModel2.new
   end
 
@@ -124,14 +125,14 @@ context 'Model with magic enum and default value specified' do
   end
 end
 
-context 'Model with magic enum and raise_on_invalid option specified' do
+describe 'Model with magic enum and raise_on_invalid option specified' do
   include MagicEnumHelper
 
   class TestModel3 < MagicEnumHelper::TestModelBase
     define_enum :status, :raise_on_invalid => true
   end
 
-  setup do
+  before do
     @model = TestModel3.new
   end
 
@@ -149,14 +150,14 @@ context 'Model with magic enum and raise_on_invalid option specified' do
 end
 
 
-context 'Model with magic enum and simple_accessors option specified' do
+describe 'Model with magic enum and simple_accessors option specified' do
   include MagicEnumHelper
 
   class TestModel4 < MagicEnumHelper::TestModelBase
     define_enum :status, :simple_accessors => true
   end
 
-  setup do
+  before do
     @model = TestModel4.new
   end
 
@@ -167,13 +168,10 @@ context 'Model with magic enum and simple_accessors option specified' do
   end
 end
 
-context 'Model with magic enum and named_scopes option specified' do
+describe 'Model with magic enum and named_scopes option specified' do
   include MagicEnumHelper
 
   class TestModel5 < MagicEnumHelper::TestModelBase
-  end
-
-  setup do
   end
 
   specify 'should define named_scopes' do
@@ -186,7 +184,7 @@ context 'Model with magic enum and named_scopes option specified' do
   end
 end
 
-context 'Model with magic enum and enum option specified' do
+describe 'Model with magic enum and enum option specified' do
   include MagicEnumHelper
 
   class TestModel7 < MagicEnumHelper::TestModelBase
@@ -197,7 +195,7 @@ context 'Model with magic enum and enum option specified' do
     define_enum :status, :enum => 'Roles'
   end
 
-  setup do
+  before do
     @model = TestModel7.new
   end
 
@@ -216,7 +214,7 @@ context 'Model with magic enum and enum option specified' do
   end
 end
 
-context 'ActiveRecord::Base class' do
+describe 'ActiveRecord::Base class' do
   specify 'should include MagicEnum module' do
     ActiveRecord::Base.included_modules.should include(MagicEnum)
   end

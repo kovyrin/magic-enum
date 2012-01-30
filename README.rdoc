@@ -74,4 +74,6 @@ This example is identical to:
 
 == Who are the authors?
 
-This plugin was originally developed for BestTechVideos project (http://www.bestechvideos.com) and later was cleaned up in Scribd repository and released to the public. All the code in this package is released under the GPLv2 license. For more details, see the LICENSE file.
+This plugin was originally developed for BestTechVideos project (http://www.bestechvideos.com) by Dmytro Shteflyuk (http://kpumuk.info)
+and later cleaned up in Scribd repository and released to the public by Oleksiy Kovyrin. All the code in this package is released under
+the MIT license. For more details, see the LICENSE file.

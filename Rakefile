@@ -1,15 +1,15 @@
 require 'rake'
-require 'spec/rake/spectask'
-require 'rake/rdoctask'
+require 'bundler'
+Bundler::GemHelper.install_tasks
+
+require 'rspec/core/rake_task'
+require 'rdoc/task'
 
 desc 'Default: run unit tests.'
 task :default => :spec
 
 desc 'Test the magic_enum plugin.'
-Spec::Rake::SpecTask.new(:spec) do |t|
-  t.libs << 'lib'
-  t.pattern = 'spec/*_spec.rb'
-end
+RSpec::Core::RakeTask.new(:spec)
 
 desc 'Generate documentation for the magic_enum plugin.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
