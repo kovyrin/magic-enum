@@ -50,12 +50,12 @@ module MagicEnum
     #   StatusesInverted = Statuses.invert
     #
     #   def status
-    #     return StatusesInverted[self[:status].to_i] || StatusesInverted[1]
+    #     return StatusesInverted[self.attributes[:status].to_i] || StatusesInverted[1]
     #   end
     #
     #   def status=(value)
     #     raise ArgumentError, "Invalid value \"#{value}\" for :status attribute of the #{self.class} model" if Statuses[value].nil?
-    #     self[:status] = Statuses[value]
+    #     self.attributes[:status] = Statuses[value]
     #   end
     #
     #   def unknown?
@@ -103,7 +103,7 @@ module MagicEnum
       const_set(enum_inverted, const_get(enum).invert)
 
       define_method name do
-        self.class.const_get(enum_inverted)[self[name]] || self.class.const_get(enum_inverted)[opts[:default]]
+        self.class.const_get(enum_inverted)[self.attributes[name]] || self.class.const_get(enum_inverted)[opts[:default]]
       end
 
       define_method "#{name}_name" do
@@ -114,9 +114,9 @@ module MagicEnum
         value = value.to_sym if value.is_a?(String)
         raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and self.class.const_get(enum)[value].nil?
         if value.is_a?(Integer)
-          self[name] = value
+          self.attributes[name] = value
         else
-          self[name] = self.class.const_get(enum)[value] || opts[:default]
+          self.attributes[name] = self.class.const_get(enum)[value] || opts[:default]
         end
       end
 
