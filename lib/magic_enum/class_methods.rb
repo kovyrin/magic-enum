@@ -98,7 +98,7 @@ module MagicEnum
         else
           a <=> b
         end
-      end.first unless opts[:default]
+      end.first unless opts.has_key?(:default)
 
       const_set(enum_inverted, const_get(enum).invert)
 
@@ -111,7 +111,7 @@ module MagicEnum
       end
 
       define_method "#{name}=" do |value|
-        value = value.to_sym if value.is_a?(String)
+        value = value.to_sym if value.is_a?(String) && value.length > 0
         raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and self.class.const_get(enum)[value].nil?
         if value.is_a?(Integer)
           self.attributes[name] = value

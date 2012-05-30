@@ -2,10 +2,11 @@ require 'rubygems'
 require 'active_record'
 
 require File.dirname(__FILE__) + '/../init'
+require File.dirname(__FILE__) + '/../lib/magic_enum'
 
 module MagicEnumHelper
   class TestModelBase
-    include MagicEnum
+    extend MagicEnum::ClassMethods
     Statuses = { :unknown => 0, :draft => 1, :published => 2 }
 
     def [](attr_name)
@@ -14,6 +15,12 @@ module MagicEnumHelper
 
     def []=(attr_name, value)
       @status = value
+    end
+    attr_accessor :attributes
+
+    def initialize(*args)
+      super
+      @attributes = {}
     end
   end
 end
@@ -52,6 +59,11 @@ describe 'Model with magic enum' do
     @model.status.should == :unknown
   end
 
+  specify 'use a default value if the string is empty' do
+    @model.status = ''
+    @model[:status].should == 0
+  end
+    
   specify 'should store enum value if key is given as integer equivalent' do
     @model.status = 1
     @model[:status].should == 1
@@ -122,6 +134,25 @@ describe 'Model with magic enum and default value specified' do
     @model.status.should == :published
     @model[:status] = 0
     @model.status.should == :unknown
+  end
+end
+
+context 'Model with magic enum and default value of nil' do
+  include MagicEnumHelper
+
+  class TestModelNil < MagicEnumHelper::TestModelBase
+    define_enum :status, :default => nil
+  end
+
+  setup do
+    @model = TestModelNil.new
+  end
+
+  specify 'should use default value when current state is invalid' do
+    @model.status = :draft
+    @model.status.should == :draft
+    @model.status = nil
+    @model.status.should == nil
   end
 end
 
