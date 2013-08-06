@@ -1,2 +1,0 @@
-require 'magic_enum'
-

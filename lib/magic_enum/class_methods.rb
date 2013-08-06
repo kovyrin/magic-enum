@@ -112,10 +112,11 @@ module MagicEnum
 
       define_method "#{name}=" do |value|
         value = value.to_sym if value.is_a?(String)
-        raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and self.class.const_get(enum)[value].nil?
         if value.is_a?(Integer)
+          raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and !self.class.const_get(enum_inverted).key?(value)
           self[name] = value
         else
+          raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and !self.class.const_get(enum).key?(value)
           self[name] = self.class.const_get(enum)[value] || opts[:default]
         end
       end
