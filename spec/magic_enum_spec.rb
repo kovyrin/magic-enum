@@ -19,17 +19,17 @@ end
 describe 'Model with magic enum' do
   include MagicEnumHelper
 
-  class TestModel1 < MagicEnumHelper::TestModelBase
+  class TestModelSimple < MagicEnumHelper::TestModelBase
     define_enum :status
   end
 
   before do
-    @model = TestModel1.new
+    @model = TestModelSimple.new
   end
 
   it 'should define methods to get and set enum field' do
-    TestModel1.should be_method_defined(:status)
-    TestModel1.should be_method_defined(:status=)
+    TestModelSimple.should be_method_defined(:status)
+    TestModelSimple.should be_method_defined(:status=)
   end
 
   it 'should store enum value using [] operation on model' do
@@ -86,7 +86,8 @@ describe 'Model with magic enum' do
   end
 
   it 'should not define named scopes by default' do
-    TestModel1.should_not_receive(:named_scope)
+    TestModelSimple.should_not_receive(:named_scope)
+    TestModelSimple.should_not_receive(:scope)
   end
 
 end
@@ -94,12 +95,12 @@ end
 describe 'Model with magic enum and default value specified' do
   include MagicEnumHelper
 
-  class TestModel2 < MagicEnumHelper::TestModelBase
+  class TestModelWithDefault < MagicEnumHelper::TestModelBase
     define_enum :status, :default => 2
   end
 
   before do
-    @model = TestModel2.new
+    @model = TestModelWithDefault.new
   end
 
   it 'should use default value when current state is invalid' do
@@ -123,15 +124,48 @@ describe 'Model with magic enum and default value specified' do
   end
 end
 
+describe 'Model with magic enum and default value specified as nil' do
+  include MagicEnumHelper
+
+  class TestModelWithDefaultNil < MagicEnumHelper::TestModelBase
+    SimpleStatuses = { :unknown => 0, :draft => 1, :published => 2, :simple => nil }
+    define_enum :simple_status, :default => nil
+  end
+
+  before do
+    @model = TestModelWithDefaultNil.new
+  end
+
+  it 'should use default value when current state is invalid' do
+    @model[:simple_status] = -1
+    @model.simple_status.should == :simple
+  end
+
+  it 'should use default value when invalid value received' do
+    @model.simple_status = nil
+    @model.simple_status.should == :simple
+    @model.simple_status = :invalid
+    @model.simple_status.should == :simple
+    @model[:simple_status].should be_nil
+  end
+
+  it 'should not interpret nil in the same way as 0' do
+    @model[:simple_status].should be_nil
+    @model.simple_status.should == :simple
+    @model[:simple_status] = 0
+    @model.simple_status.should == :unknown
+  end
+end
+
 describe 'Model with magic enum and raise_on_invalid option specified' do
   include MagicEnumHelper
 
-  class TestModel3 < MagicEnumHelper::TestModelBase
+  class TestModelWithRaiseOnInvalid < MagicEnumHelper::TestModelBase
     define_enum :status, :raise_on_invalid => true
   end
 
   before do
-    @model = TestModel3.new
+    @model = TestModelWithRaiseOnInvalid.new
   end
 
   context 'with symbol value' do
@@ -147,7 +181,7 @@ describe 'Model with magic enum and raise_on_invalid option specified' do
       begin
         @model.status = :invalid
       rescue => e
-        e.message.should == 'Invalid value "invalid" for :status attribute of the TestModel3 model'
+        e.message.should == 'Invalid value "invalid" for :status attribute of the TestModelWithRaiseOnInvalid model'
       end
     end
   end
@@ -165,7 +199,7 @@ describe 'Model with magic enum and raise_on_invalid option specified' do
       begin
         @model.status = 4
       rescue => e
-        e.message.should == 'Invalid value "4" for :status attribute of the TestModel3 model'
+        e.message.should == 'Invalid value "4" for :status attribute of the TestModelWithRaiseOnInvalid model'
       end
     end
   end
@@ -175,12 +209,12 @@ end
 describe 'Model with magic enum and simple_accessors option specified' do
   include MagicEnumHelper
 
-  class TestModel4 < MagicEnumHelper::TestModelBase
+  class TestModelWithSimpleAccessors < MagicEnumHelper::TestModelBase
     define_enum :status, :simple_accessors => true
   end
 
   before do
-    @model = TestModel4.new
+    @model = TestModelWithSimpleAccessors.new
   end
 
   it 'should define simple accessors by default' do
@@ -193,23 +227,23 @@ end
 describe 'Model with magic enum and named_scopes option specified' do
   include MagicEnumHelper
 
-  class TestModel5 < ActiveRecord::Base
+  class TestModelWithNamedScopes < ActiveRecord::Base
     Statuses = { :unknown => 0, :draft => 1, :published => 2 }
+    define_enum :status, :named_scopes => true
   end
 
   it 'should define named_scopes' do
-    TestModel5.send(:define_enum, :status, :named_scopes => true)
-    TestModel5.should respond_to(:unknowns)
-    TestModel5.should respond_to(:drafts)
-    TestModel5.should respond_to(:publisheds)
-    TestModel5.should respond_to(:of_status)
+    TestModelWithNamedScopes.should respond_to(:unknowns)
+    TestModelWithNamedScopes.should respond_to(:drafts)
+    TestModelWithNamedScopes.should respond_to(:publisheds)
+    TestModelWithNamedScopes.should respond_to(:of_status)
   end
 end
 
 describe 'Model with magic enum and enum option specified' do
   include MagicEnumHelper
 
-  class TestModel7 < MagicEnumHelper::TestModelBase
+  class TestModelEnumOption < MagicEnumHelper::TestModelBase
     Roles = {
       :user => 'u',
       :admin => 'a'
@@ -218,7 +252,7 @@ describe 'Model with magic enum and enum option specified' do
   end
 
   before do
-    @model = TestModel7.new
+    @model = TestModelEnumOption.new
   end
 
   it 'should use custom enum' do

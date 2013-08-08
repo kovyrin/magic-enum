@@ -98,7 +98,7 @@ module MagicEnum
         else
           a <=> b
         end
-      end.first unless opts[:default]
+      end.first unless opts.key?(:default)
 
       const_set(enum_inverted, const_get(enum).invert)
 
