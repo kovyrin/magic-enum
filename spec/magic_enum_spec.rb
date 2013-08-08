@@ -60,9 +60,9 @@ describe 'Model with magic enum' do
   end
 
   it 'should not define simple accessors by default' do
-    @model.methods.map(&:to_s).should_not include('unknown?')
-    @model.methods.map(&:to_s).should_not include('draft?')
-    @model.methods.map(&:to_s).should_not include('published?')
+    @model.should_not respond_to(:unknown?)
+    @model.should_not respond_to(:draft?)
+    @model.should_not respond_to(:published?)
   end
 
   it 'should not raise error when invalid value received' do
@@ -184,25 +184,25 @@ describe 'Model with magic enum and simple_accessors option specified' do
   end
 
   it 'should define simple accessors by default' do
-    @model.methods.map(&:to_s).should include('unknown?')
-    @model.methods.map(&:to_s).should include('draft?')
-    @model.methods.map(&:to_s).should include('published?')
+    @model.should respond_to(:unknown?)
+    @model.should respond_to(:draft?)
+    @model.should respond_to(:published?)
   end
 end
 
 describe 'Model with magic enum and named_scopes option specified' do
   include MagicEnumHelper
 
-  class TestModel5 < MagicEnumHelper::TestModelBase
+  class TestModel5 < ActiveRecord::Base
+    Statuses = { :unknown => 0, :draft => 1, :published => 2 }
   end
 
   it 'should define named_scopes' do
-    TestModel5.should_receive(:named_scope).with(:unknowns, {:conditions=>["status = ?", 0]}).once
-    TestModel5.should_receive(:named_scope).with(:drafts, {:conditions=>["status = ?", 1]}).once
-    TestModel5.should_receive(:named_scope).with(:publisheds, {:conditions=>["status = ?", 2]}).once
-    TestModel5.should_receive(:named_scope).once # to handle the :of_status named_scope,
-                                                 # since we can't set an expectation with a Proc argument
     TestModel5.send(:define_enum, :status, :named_scopes => true)
+    TestModel5.should respond_to(:unknowns)
+    TestModel5.should respond_to(:drafts)
+    TestModel5.should respond_to(:publisheds)
+    TestModel5.should respond_to(:of_status)
   end
 end
 
