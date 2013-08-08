@@ -60,9 +60,9 @@ describe 'Model with magic enum' do
   end
 
   it 'should not define simple accessors by default' do
-    @model.methods.should_not include('unknown?')
-    @model.methods.should_not include('draft?')
-    @model.methods.should_not include('published?')
+    @model.methods.map(&:to_s).should_not include('unknown?')
+    @model.methods.map(&:to_s).should_not include('draft?')
+    @model.methods.map(&:to_s).should_not include('published?')
   end
 
   it 'should not raise error when invalid value received' do
@@ -184,9 +184,9 @@ describe 'Model with magic enum and simple_accessors option specified' do
   end
 
   it 'should define simple accessors by default' do
-    @model.methods.should include('unknown?')
-    @model.methods.should include('draft?')
-    @model.methods.should include('published?')
+    @model.methods.map(&:to_s).should include('unknown?')
+    @model.methods.map(&:to_s).should include('draft?')
+    @model.methods.map(&:to_s).should include('published?')
   end
 end
 
