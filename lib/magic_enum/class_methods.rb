@@ -98,7 +98,7 @@ module MagicEnum
         else
           a <=> b
         end
-      end.first unless opts[:default]
+      end.first unless opts.key?(:default)
 
       const_set(enum_inverted, const_get(enum).invert)
 
@@ -112,10 +112,11 @@ module MagicEnum
 
       define_method "#{name}=" do |value|
         value = value.to_sym if value.is_a?(String)
-        raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and self.class.const_get(enum)[value].nil?
         if value.is_a?(Integer)
+          raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and !self.class.const_get(enum_inverted).key?(value)
           self[name] = value
         else
+          raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and !self.class.const_get(enum).key?(value)
           self[name] = self.class.const_get(enum)[value] || opts[:default]
         end
       end
@@ -130,20 +131,49 @@ module MagicEnum
 
       # Create named scopes for each enum value
       if opts[:named_scopes]
-        const_get(enum).keys.each do |key|
-          named_scope key.to_s.pluralize.to_sym, :conditions => ["#{name} = ?", const_get(enum)[key]] do
-            opts[:scope_extensions].each do |ext_name, ext_block|
-              define_method ext_name, ext_block
-            end if opts[:scope_extensions] and opts[:scope_extensions].is_a?(Hash)
-          end
+        scope_definition_method = respond_to?(:named_scope) ? :named_scope : :scope
+
+        const_get(enum).each do |key, value|
+          define_enum_scope(enum, key.to_s.pluralize, name, key, opts[:scope_extensions])
         end
-        named_scope "of_#{name}".to_sym, lambda { |t| { :conditions => ["#{name} = ?", const_get(enum)[t]] } } do
-          opts[:scope_extensions].each do |ext_name, ext_block|
-            define_method ext_name, ext_block
-          end if opts[:scope_extensions] and opts[:scope_extensions].is_a?(Hash)
-        end
+
+        define_enum_scope(enum, "of_#{name}", name, nil, opts[:scope_extensions])
       end
 
+    end
+
+    private
+
+    def define_enum_scope(enum, scope_name, name, key, scope_extensions)
+      if respond_to?(:named_scope)
+        # Rails 2.2 - 2.3
+
+        where_clause = if key
+          { :conditions => { name => const_get(enum)[key] } }
+        else
+          lambda { |t| { :conditions => { name => const_get(enum)[t] } } }
+        end
+
+        named_scope scope_name.to_sym, where_clause do
+          scope_extensions.each do |ext_name, ext_block|
+            define_method ext_name, ext_block
+          end if Hash === scope_extensions
+        end
+      else
+        # Rails 3+
+
+        where_clause = if key
+          lambda { where(name => const_get(enum)[key]) }
+        else
+          lambda { |t| where(name => const_get(enum)[t]) }
+        end
+
+        scope scope_name.to_sym, where_clause do
+          scope_extensions.each do |ext_name, ext_block|
+            define_method ext_name, ext_block
+          end if Hash === scope_extensions
+        end
+      end
     end
   end
 end
