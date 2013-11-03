@@ -1,5 +1,7 @@
 # MagicEnum
 
+[![Travis-CI build status](https://secure.travis-ci.org/kovyrin/magic-enum.png)](http://travis-ci.org/kovyrin/magic-enum)
+
 MagicEnum is a simple ActiveRecord plugin that makes it easier to maintain ENUM-like attributes in your models.
 
 Examples:
