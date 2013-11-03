@@ -4,7 +4,7 @@ require 'magic_enum'
 module MagicEnumHelper
   class TestModelBase
     extend MagicEnum::ClassMethods
-    Statuses = { :unknown => 0, :draft => 1, :published => 2 }
+    STATUSES = { :unknown => 0, :draft => 1, :published => 2 }
 
     def [](attr_name)
       @status
@@ -27,69 +27,85 @@ describe 'Model with magic enum' do
     @model = TestModelSimple.new
   end
 
+  it 'should define helper class methods' do
+    expect(TestModelSimple.status_value(:draft)).to eq(1)
+    expect(TestModelSimple.status_value('draft')).to eq(1)
+    expect(TestModelSimple.status_value(:invalid)).to be_nil
+
+    expect(TestModelSimple.status_by_value(1)).to eq(:draft)
+    expect(TestModelSimple.status_by_value(-1)).to be_nil
+  end
+
   it 'should define methods to get and set enum field' do
-    TestModelSimple.should be_method_defined(:status)
-    TestModelSimple.should be_method_defined(:status=)
+    expect(TestModelSimple.method_defined?(:status)).to be_true
+    expect(TestModelSimple.method_defined?(:status=)).to be_true
+    expect(TestModelSimple.method_defined?(:status_name)).to be_true
+    expect(TestModelSimple.method_defined?(:status_value)).to be_true
   end
 
   it 'should store enum value using [] operation on model' do
     @model.status = :draft
-    @model[:status].should == 1
-    @model.status.should == :draft
+    expect(@model[:status]).to eq(1)
+    expect(@model.status).to eq(:draft)
     @model.status = :unknown
-    @model[:status].should == 0
-    @model.status.should == :unknown
+    expect(@model[:status]).to eq(0)
+    expect(@model.status).to eq(:unknown)
   end
 
   it 'should store enum value if key is given as string' do
     @model.status = 'draft'
-    @model[:status].should == 1
-    @model.status.should == :draft
+    expect(@model[:status]).to eq(1)
+    expect(@model.status).to eq(:draft)
     @model.status = 'unknown'
-    @model[:status].should == 0
-    @model.status.should == :unknown
+    expect(@model[:status]).to eq(0)
+    expect(@model.status).to eq(:unknown)
   end
 
   it 'should store enum value if key is given as integer equivalent' do
     @model.status = 1
-    @model[:status].should == 1
-    @model.status.should == :draft
+    expect(@model[:status]).to eq(1)
+    expect(@model.status).to eq(:draft)
     @model.status = 0
-    @model[:status].should == 0
-    @model.status.should == :unknown
+    expect(@model[:status]).to eq(0)
+    expect(@model.status).to eq(:unknown)
   end
 
   it 'should not define simple accessors by default' do
-    @model.should_not respond_to(:unknown?)
-    @model.should_not respond_to(:draft?)
-    @model.should_not respond_to(:published?)
+    expect(@model).to_not respond_to(:unknown?)
+    expect(@model).to_not respond_to(:draft?)
+    expect(@model).to_not respond_to(:published?)
   end
 
   it 'should not raise error when invalid value received' do
-    lambda { @model.status = :invalid }.should_not raise_error
+    expect { @model.status = :invalid }.to_not raise_error
   end
 
   it 'should use default value 0 when invalid value received or current state invalid' do
     @model[:status] = -1
-    @model.status.should == :unknown
+    expect(@model.status).to eq(:unknown)
     @model.status = :published
-    @model.status.should == :published
+    expect(@model.status).to eq(:published)
     @model.status = :invalid
-    @model[:status].should == 0
-    @model.status.should == :unknown
+    expect(@model[:status]).to eq(0)
+    expect(@model.status).to eq(:unknown)
   end
 
   it 'should return string value when _name method called' do
-    @model.status_name.should == 'unknown'
+    expect(@model.status_name).to eq('unknown')
     @model.status = :published
-    @model.status_name.should == 'published'
+    expect(@model.status_name).to eq('published')
+  end
+
+  it 'should return value when _value method called' do
+    expect(@model.status_value).to eq(0)
+    @model.status = :published
+    expect(@model.status_value).to eq(2)
   end
 
   it 'should not define named scopes by default' do
     TestModelSimple.should_not_receive(:named_scope)
     TestModelSimple.should_not_receive(:scope)
   end
-
 end
 
 describe 'Model with magic enum and default value specified' do
@@ -105,22 +121,54 @@ describe 'Model with magic enum and default value specified' do
 
   it 'should use default value when current state is invalid' do
     @model[:status] = -1
-    @model.status.should == :published
+    expect(@model.status).to eq(:published)
   end
 
   it 'should use default value when invalid value received' do
     @model.status = nil
-    @model.status.should == :published
+    expect(@model.status).to eq(:published)
     @model.status = :invalid
-    @model.status.should == :published
-    @model[:status].should == 2
+    expect(@model.status).to eq(:published)
+    expect(@model[:status]).to eq(2)
   end
 
   it 'should not interpret nil in the same way as 0' do
-    @model[:status].should be_nil
-    @model.status.should == :published
+    expect(@model[:status]).to be_nil
+    expect(@model.status).to eq(:published)
     @model[:status] = 0
-    @model.status.should == :unknown
+    expect(@model.status).to eq(:unknown)
+  end
+end
+
+describe 'Model with magic enum and default value specified as a symbol' do
+  include MagicEnumHelper
+
+  class TestModelWithDefault < MagicEnumHelper::TestModelBase
+    define_enum :status, :default => :published
+  end
+
+  before do
+    @model = TestModelWithDefault.new
+  end
+
+  it 'should use default value when current state is invalid' do
+    @model[:status] = -1
+    expect(@model.status).to eq(:published)
+  end
+
+  it 'should use default value when invalid value received' do
+    @model.status = nil
+    expect(@model.status).to eq(:published)
+    @model.status = :invalid
+    expect(@model.status).to eq(:published)
+    expect(@model[:status]).to eq(2)
+  end
+
+  it 'should not interpret nil in the same way as 0' do
+    expect(@model[:status]).to be_nil
+    expect(@model.status).to eq(:published)
+    @model[:status] = 0
+    expect(@model.status).to eq(:unknown)
   end
 end
 
@@ -128,7 +176,7 @@ describe 'Model with magic enum and default value specified as nil' do
   include MagicEnumHelper
 
   class TestModelWithDefaultNil < MagicEnumHelper::TestModelBase
-    SimpleStatuses = { :unknown => 0, :draft => 1, :published => 2, :simple => nil }
+    SIMPLE_STATUSES = { :unknown => 0, :draft => 1, :published => 2, :simple => nil }
     define_enum :simple_status, :default => nil
   end
 
@@ -138,22 +186,22 @@ describe 'Model with magic enum and default value specified as nil' do
 
   it 'should use default value when current state is invalid' do
     @model[:simple_status] = -1
-    @model.simple_status.should == :simple
+    expect(@model.simple_status).to eq(:simple)
   end
 
   it 'should use default value when invalid value received' do
     @model.simple_status = nil
-    @model.simple_status.should == :simple
+    expect(@model.simple_status).to eq(:simple)
     @model.simple_status = :invalid
-    @model.simple_status.should == :simple
-    @model[:simple_status].should be_nil
+    expect(@model.simple_status).to eq(:simple)
+    expect(@model[:simple_status]).to be_nil
   end
 
   it 'should not interpret nil in the same way as 0' do
-    @model[:simple_status].should be_nil
-    @model.simple_status.should == :simple
+    expect(@model[:simple_status]).to be_nil
+    expect(@model.simple_status).to eq(:simple)
     @model[:simple_status] = 0
-    @model.simple_status.should == :unknown
+    expect(@model.simple_status).to eq(:unknown)
   end
 end
 
@@ -170,36 +218,36 @@ describe 'Model with magic enum and raise_on_invalid option specified' do
 
   context 'with symbol value' do
     it 'should not raise error when valid value received' do
-      lambda { @model.status = :draft }.should_not raise_error
+      expect { @model.status = :draft }.to_not raise_error
     end
 
     it 'should raise error when invalid value received' do
-      lambda { @model.status = :invalid }.should raise_error(ArgumentError)
+      expect { @model.status = :invalid }.to raise_error(ArgumentError)
     end
 
     it 'should show error description when invalid value received' do
       begin
         @model.status = :invalid
       rescue => e
-        e.message.should == 'Invalid value "invalid" for :status attribute of the TestModelWithRaiseOnInvalid model'
+        expect(e.message).to eq('Invalid value "invalid" for :status attribute of the TestModelWithRaiseOnInvalid model')
       end
     end
   end
 
   context 'with integer value' do
     it 'should not raise error when valid value received' do
-      lambda { @model.status = 1 }.should_not raise_error
+      expect { @model.status = 1 }.to_not raise_error
     end
 
     it 'should raise error when invalid value received' do
-      lambda { @model.status = 4 }.should raise_error(ArgumentError)
+      expect { @model.status = 4 }.to raise_error(ArgumentError)
     end
 
     it 'should show error description when invalid value received' do
       begin
         @model.status = 4
       rescue => e
-        e.message.should == 'Invalid value "4" for :status attribute of the TestModelWithRaiseOnInvalid model'
+        expect(e.message).to eq('Invalid value "4" for :status attribute of the TestModelWithRaiseOnInvalid model')
       end
     end
   end
@@ -218,9 +266,9 @@ describe 'Model with magic enum and simple_accessors option specified' do
   end
 
   it 'should define simple accessors by default' do
-    @model.should respond_to(:unknown?)
-    @model.should respond_to(:draft?)
-    @model.should respond_to(:published?)
+    expect(@model).to respond_to(:unknown?)
+    expect(@model).to respond_to(:draft?)
+    expect(@model).to respond_to(:published?)
   end
 end
 
@@ -228,15 +276,15 @@ describe 'Model with magic enum and named_scopes option specified' do
   include MagicEnumHelper
 
   class TestModelWithNamedScopes < ActiveRecord::Base
-    Statuses = { :unknown => 0, :draft => 1, :published => 2 }
+    STATUSES = { :unknown => 0, :draft => 1, :published => 2 }
     define_enum :status, :named_scopes => true
   end
 
   it 'should define named_scopes' do
-    TestModelWithNamedScopes.should respond_to(:unknowns)
-    TestModelWithNamedScopes.should respond_to(:drafts)
-    TestModelWithNamedScopes.should respond_to(:publisheds)
-    TestModelWithNamedScopes.should respond_to(:of_status)
+    expect(TestModelWithNamedScopes).to respond_to(:unknowns)
+    expect(TestModelWithNamedScopes).to respond_to(:drafts)
+    expect(TestModelWithNamedScopes).to respond_to(:publisheds)
+    expect(TestModelWithNamedScopes).to respond_to(:of_status)
   end
 end
 
@@ -257,21 +305,21 @@ describe 'Model with magic enum and enum option specified' do
 
   it 'should use custom enum' do
     @model.status = :user
-    @model.status.should == :user
-    @model[:status].should == 'u'
+    expect(@model.status).to eq(:user)
+    expect(@model[:status]).to eq('u')
     @model.status = :admin
-    @model.status.should == :admin
-    @model[:status].should == 'a'
+    expect(@model.status).to eq(:admin)
+    expect(@model[:status]).to eq('a')
   end
 
   it 'should use option with min value as default' do
     @model.status = :invalid
-    @model.status.should == :admin
+    expect(@model.status).to eq(:admin)
   end
 end
 
 describe 'ActiveRecord::Base class' do
   it 'should include MagicEnum methods' do
-    ActiveRecord::Base.should respond_to(:define_enum)
+    expect(ActiveRecord::Base).to respond_to(:define_enum)
   end
 end

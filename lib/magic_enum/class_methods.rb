@@ -2,10 +2,10 @@ module MagicEnum
   module ClassMethods
     # Method used to define ENUM attributes in your model. Examples:
     #
-    #   Statuses = {
-    #     :draft => 0,
+    #   STATUSES = {
+    #     :draft     => 0,
     #     :published => 1,
-    #     :approved => 2
+    #     :approved  => 2,
     #   }
     #   define_enum :status
     #
@@ -31,31 +31,39 @@ module MagicEnum
     #
     # Look the following example:
     #
-    #   Statuses = {
-    #     :unknown => 0,
-    #     :draft => 1,
+    #   STATUSES = {
+    #     :unknown   => 0,
+    #     :draft     => 1,
     #     :published => 2,
-    #     :approved => 3
+    #     :approved  => 3,
     #   }
     #   define_enum :status, :default => 1, :raise_on_invalid => true, :simple_accessors => true
     #
     # This example is identical to:
     #
-    #   Statuses = {
-    #     :unknown => 0,
-    #     :draft => 1,
+    #   STATUSES = {
+    #     :unknown   => 0,
+    #     :draft     => 1,
     #     :published => 2,
-    #     :approved => 3
+    #     :approved  => 3,
     #   }
-    #   StatusesInverted = Statuses.invert
+    #   STATUSES_INVERTED = STATUSES.invert
+    #
+    #   def self.status_value(status)
+    #     STATUSES[status]
+    #   end
+    #
+    #   def self.status_by_value(value)
+    #     STATUSES_INVERTED[value]
+    #   end
     #
     #   def status
-    #     return StatusesInverted[self[:status].to_i] || StatusesInverted[1]
+    #     self.class.status_by_value(self[:status]) || self.class.status_by_value(1)
     #   end
     #
     #   def status=(value)
-    #     raise ArgumentError, "Invalid value \"#{value}\" for :status attribute of the #{self.class} model" if Statuses[value].nil?
-    #     self[:status] = Statuses[value]
+    #     raise ArgumentError, "Invalid value \"#{value}\" for :status attribute of the #{self.class} model" unless STATUSES.key?(value)
+    #     self[:status] = STATUSES[value]
     #   end
     #
     #   def unknown?
@@ -75,57 +83,74 @@ module MagicEnum
     #   end
     #
     def define_enum(name, opts = {})
-      default_opts = {  :raise_on_invalid => false,
-                        :simple_accessors => false,
-                        :named_scopes => false,
-                        :scope_extensions => false
-                        }
-      opts = default_opts.merge(opts)
+      opts = opts.reverse_merge({
+        :raise_on_invalid => false,
+        :simple_accessors => false,
+        :named_scopes     => false,
+        :scope_extensions => false,
+      })
       name = name.to_sym
 
-      # bug in Rails 1.2.2
-      opts[:enum] = name.to_s.pluralize.classify.pluralize unless opts[:enum]
+      opts[:enum] ||= name.to_s.pluralize.upcase
       enum = opts[:enum]
-      enum_inverted = "#{enum}Inverted"
+      enum_inverted = "#{enum}_INVERTED"
+      enum_value = const_get(enum)
 
-      opts[:default] = const_get(enum).values.sort do |a, b|
-        if a.nil? and b.nil?
-          0
-        elsif a.nil?
-          -1
-        elsif b.nil?
-          1
-        else
-          a <=> b
+      if opts.key?(:default)
+        opts[:default] = enum_value[opts[:default]] if opts[:default].is_a?(Symbol)
+      else
+        opts[:default] = enum_value.values.sort do |a, b|
+          if a.nil? and b.nil?
+            0
+          elsif a.nil?
+            -1
+          elsif b.nil?
+            1
+          else
+            a <=> b
+          end
+        end.first
+      end
+
+      const_set(enum_inverted, enum_value.invert)
+
+      class_eval <<-RUBY
+        def self.#{name}_value(name)
+          name = name.to_sym if name.is_a?(String)
+          #{enum}[name]
         end
-      end.first unless opts.key?(:default)
 
-      const_set(enum_inverted, const_get(enum).invert)
-
-      define_method name do
-        self.class.const_get(enum_inverted)[self[name]] || self.class.const_get(enum_inverted)[opts[:default]]
-      end
-
-      define_method "#{name}_name" do
-        send(name).to_s
-      end
-
-      define_method "#{name}=" do |value|
-        value = value.to_sym if value.is_a?(String)
-        if value.is_a?(Integer)
-          raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and !self.class.const_get(enum_inverted).key?(value)
-          self[name] = value
-        else
-          raise ArgumentError, "Invalid value \"#{value}\" for :#{name} attribute of the #{self.class} model" if opts[:raise_on_invalid] and !self.class.const_get(enum).key?(value)
-          self[name] = self.class.const_get(enum)[value] || opts[:default]
+        def self.#{name}_by_value(value)
+          #{enum_inverted}[value]
         end
-      end
+
+        def #{name}
+          self.class.#{name}_by_value(self[:#{name}]) || self.class.#{name}_by_value(#{opts[:default].inspect})
+        end
+
+        def #{name}_name
+          self.#{name}.to_s
+        end
+
+        def #{name}_value
+          self[:#{name}] || #{opts[:default].inspect}
+        end
+
+        def #{name}=(value)
+          value = value.to_sym if value.is_a?(String)
+          if value.is_a?(Integer)
+            raise ArgumentError, "Invalid value \\"\#{value}\\" for :#{name} attribute of the #{self.name} model" if #{!!opts[:raise_on_invalid]} and !#{enum_inverted}.key?(value)
+            self[:#{name}] = value
+          else
+            raise ArgumentError, "Invalid value \\"\#{value}\\" for :#{name} attribute of the #{self.name} model" if #{!!opts[:raise_on_invalid]} and !#{enum}.key?(value)
+            self[:#{name}] = self.class.#{name}_value(value) || #{opts[:default].inspect}
+          end
+        end
+      RUBY
 
       if opts[:simple_accessors]
-        const_get(enum).keys.each do |key|
-          define_method "#{key}?" do
-            send(name) == key
-          end
+        enum_value.keys.each do |key|
+          class_eval "def #{key}?() #{name} == :#{key} end"
         end
       end
 
@@ -133,7 +158,7 @@ module MagicEnum
       if opts[:named_scopes]
         scope_definition_method = respond_to?(:named_scope) ? :named_scope : :scope
 
-        const_get(enum).each do |key, value|
+        enum_value.keys.each do |key|
           define_enum_scope(enum, key.to_s.pluralize, name, key, opts[:scope_extensions])
         end
 
