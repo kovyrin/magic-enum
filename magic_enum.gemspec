@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.files            = `git ls-files`.split("\n")
   s.require_paths    = [ 'lib' ]
-  s.extra_rdoc_files = [ 'LICENSE', 'README.rdoc' ]
+  s.extra_rdoc_files = [ 'LICENSE', 'README.md' ]
 
   # Dependencies
   s.add_dependency 'activerecord'
