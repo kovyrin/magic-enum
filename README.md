@@ -26,6 +26,14 @@ Name of inverted hash was changed as well:
     StatusesInverted => STATUSES_INVERTED
     SimpleStatusesInverted => SIMPLE_STATUSES_INVERTED
 
+## Installation
+
+Add the "magic_enum" gem to your `Gemfile`.
+
+    gem "magic_enum"
+
+And run `bundle install` command.
+
 ## How to Use
 
 Before using `define_enum`, you should define constant with ENUM options.
