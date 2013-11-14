@@ -12,6 +12,7 @@ Gem::Specification.new do |s|
   s.homepage      = 'https://github.com/kovyrin/magic-enum'
   s.summary       = 'ActiveRecord plugin that makes it easier to maintain ENUM-like attributes in your models'
   s.description   = 'MagicEnum is a simple ActiveRecord plugin that makes it easier to maintain ENUM-like attributes in your models.'
+  s.license       = 'MIT'
 
   s.rdoc_options = [ '--charset=UTF-8' ]
 
