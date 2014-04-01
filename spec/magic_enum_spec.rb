@@ -318,6 +318,27 @@ describe 'Model with magic enum and enum option specified' do
   end
 end
 
+describe 'Model with two magic enums sharing a single enum hash' do
+  include MagicEnumHelper
+
+  class TestModelSimple < MagicEnumHelper::TestModelBase
+    define_enum :status
+    define_enum :another_status, :enum => 'STATUSES'
+  end
+
+  before do
+    @model = TestModelSimple.new
+  end
+
+  it 'should define helper class methods' do
+    expect(TestModelSimple.status_value(:draft)).to eq(1)
+    expect(TestModelSimple.another_status_value(:draft)).to eq(1)
+
+    expect(TestModelSimple.status_by_value(1)).to eq(:draft)
+    expect(TestModelSimple.another_status_by_value(1)).to eq(:draft)
+  end
+end
+
 describe 'ActiveRecord::Base class' do
   it 'should include MagicEnum methods' do
     expect(ActiveRecord::Base).to respond_to(:define_enum)

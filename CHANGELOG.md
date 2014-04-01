@@ -9,6 +9,7 @@ Features:
 Bugfixes:
 
   - Fixed const naming: use `SIMPLE_STATUSES` and `SIMPLE_STATUSES_INVERTED` instead of `SimpleStatuses` and `SimpleStatusesInverted`
+  - Fixed Ruby warning about redefining a constant occurred when two or more magic enums share single enum value hash
 
 ## 0.9.0 (August 8, 2013)
 

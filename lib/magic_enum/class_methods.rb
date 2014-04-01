@@ -112,7 +112,12 @@ module MagicEnum
         end.first
       end
 
-      const_set(enum_inverted, enum_value.invert)
+      enum_inverted_value = enum_value.invert
+      if !const_defined?(enum_inverted)
+        const_set(enum_inverted, enum_value.invert)
+      elsif const_get(enum_inverted) != enum_inverted_value
+        raise ArgumentError, "Inverted enum constant \"#{enum_inverted}\" is already defined and contains wrong values"
+      end
 
       class_eval <<-RUBY
         def self.#{name}_value(name)
